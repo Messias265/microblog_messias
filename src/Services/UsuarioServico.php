@@ -1,7 +1,9 @@
 <?php
 namespace Microblog\Services;
 
+use Exception;
 use Microblog\Database\ConexaoBD;
+use Microblog\Helpers\Utils;
 use PDO;
 use PDOException;
 
@@ -33,7 +35,7 @@ final class UsuarioServico
 
                 // Lançando uma mensagem de erro amigável (sem detalhes)
                 // Essa mensagem será posteriormente capturada e exibida no Front-End
-                throw new Exception("Erro ao listar usuários")
+                throw new Exception("Erro ao listar usuários");
             }
         }
-}
+        }
