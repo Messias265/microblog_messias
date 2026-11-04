@@ -13,7 +13,8 @@ $email = "";
 $tipo = "editor"; // valor padrão conforme formulário
 
 if($_SERVER['REQUEST_METHOD'] === "POST"){
-    /* Normaliza as entradas de dados do formulário para minimizar problemas de segurança e inconsistências. */
+    try {
+         /* Normaliza as entradas de dados do formulário para minimizar problemas de segurança e inconsistências. */
 
     $nome = Utils::normalizarEntrada($_POST["nome"] ?? "");
     $email = Utils::normalizarEntrada($_POST['email'] ?? "", 'email');
@@ -46,7 +47,20 @@ if($_SERVER['REQUEST_METHOD'] === "POST"){
     // Redirecionar para a página usuarios.php
     header("location:usuarios.php");
     exit;
+} catch (InvalidArgumentException $e) {
+    // Primeiro catch: para erros de validação
+    // Exemplo: nome inválido, e-mail incorreto, senha inadequada etc.
+    $mensagemErro = $e->getMessage(); // resgata a mensagem lançada pela exceção
+} catch (Throwable $e) {
+    // Segundo catch: para exceções e erros inesperados.
+
+    // Registramos no log
+    Utils::registrarLog($e);
+
+    // Definimos uma mensagem genérica ao usuário
+    $mensagemErro = "Não foi possível cadastrar o usuário. Tente novamente."
 }
+
 
 require_once __DIR__ . '/../includes/cabecalho-admin.php'; ?>
 
