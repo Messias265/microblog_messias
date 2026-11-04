@@ -2,6 +2,7 @@
 namespace Microblog\Services;
 
 use Exception;
+use Microblog\Models\Usuario;
 use Microblog\Database\ConexaoBD;
 use Microblog\Helpers\Utils;
 use PDO;
@@ -38,4 +39,24 @@ final class UsuarioServico
                 throw new Exception("Erro ao listar usuários");
             }
         }
+
+        public function inserir(Usuario $usuario): void
+        {
+            $sql = "INSERT INTO usuarios (nome, email, senha, tipo) VALUES(:nome, :email, :senha, :tipo)";
+
+            try {
+                $consulta = $this->conexao->prepare($sql);
+
+                /* Repare abaixo o acesso aos dados do objeto $usuario
+                através de seus getters. No caso do getTipoUsuario, como se trata de uma ENUM, acessamos seu valor usando -> value */
+                $consulta->bindValue(":nome", $usuario->getNome());
+                $consulta->bindValue(":senha", $usuario->getSenha());
+                $consulta->bindValue(":tipo", $usuario->getTipoUsuario()->value);
+                
+                $consulta->execute();
+            } catch (PDOException $e) {
+                Utils::registrarLog($e);
+                throw new Exception("Erro ao inserir usuário");
+            }
         }
+}
