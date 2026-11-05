@@ -1,0 +1,100 @@
+[2026-11-05 11:07:57]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 45
+Mensagem: syntax error, unexpected token "}"
+
+[2026-11-05 11:08:12]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 45
+Mensagem: syntax error, unexpected token "}"
+
+[2026-11-05 11:08:24]
+Arquivo: C:\backend\microblog_messias\admin\categorias.php
+Linha: 12
+Mensagem: Class "Microblog\Services\Categoriaservico" not found
+
+[2026-11-05 11:08:24]
+Arquivo: C:\backend\microblog_messias\admin\categorias.php
+Linha: 12
+Mensagem: Class "Microblog\Services\Categoriaservico" not found
+
+[2026-11-05 11:08:24]
+Arquivo: C:\backend\microblog_messias\admin\categorias.php
+Linha: 12
+Mensagem: Class "Microblog\Services\Categoriaservico" not found
+
+[2026-11-05 11:08:24]
+Arquivo: C:\backend\microblog_messias\admin\categorias.php
+Linha: 12
+Mensagem: Class "Microblog\Services\Categoriaservico" not found
+
+[2026-11-05 11:08:24]
+Arquivo: C:\backend\microblog_messias\admin\categorias.php
+Linha: 12
+Mensagem: Class "Microblog\Services\Categoriaservico" not found
+
+[2026-11-05 11:08:42]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 45
+Mensagem: syntax error, unexpected token "}"
+
+[2026-11-05 11:08:47]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 45
+Mensagem: syntax error, unexpected token "}"
+
+[2026-11-05 11:18:36]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 17
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:21:01]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 18
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:21:09]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 18
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:21:11]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 18
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:23:38]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 18
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:25:03]
+Arquivo: C:\backend\microblog_messias\admin\categoria-insere.php
+Linha: 18
+Mensagem: Call to a member function inserir() on null
+
+[2026-11-05 11:26:26]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 37
+Mensagem: Microblog\Services\Categoriaservico::inserir(): Argument #1 ($categoria) must be of type Microblog\Models\Categoria, string given, called in C:\backend\microblog_messias\admin\categoria-insere.php on line 20
+
+[2026-11-05 11:26:28]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 37
+Mensagem: Microblog\Services\Categoriaservico::inserir(): Argument #1 ($categoria) must be of type Microblog\Models\Categoria, string given, called in C:\backend\microblog_messias\admin\categoria-insere.php on line 20
+
+[2026-11-05 11:26:28]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 37
+Mensagem: Microblog\Services\Categoriaservico::inserir(): Argument #1 ($categoria) must be of type Microblog\Models\Categoria, string given, called in C:\backend\microblog_messias\admin\categoria-insere.php on line 20
+
+[2026-11-05 11:26:29]
+Arquivo: C:\backend\microblog_messias\src\Services\CategoriaServico.php
+Linha: 37
+Mensagem: Microblog\Services\Categoriaservico::inserir(): Argument #1 ($categoria) must be of type Microblog\Models\Categoria, string given, called in C:\backend\microblog_messias\admin\categoria-insere.php on line 20
+
+[2026-11-05 11:54:31]
+Arquivo: C:\backend\microblog_messias\admin\categoria-atualiza.php
+Linha: 38
+Mensagem: Class "Categoria" not found
+
