@@ -1,4 +1,16 @@
-<?php require_once __DIR__ . '/../includes/cabecalho-admin.php'; ?>
+<?php 
+use Microblog\Helpers\Utils;
+use Microblog\Helpers\Validacoes;
+use Microblog\Models\Categoria;
+
+require_once __DIR__ .'/../vendor/autoload.php';
+
+$mensagemErro = "";
+$nome = "";
+
+
+
+require_once __DIR__ . '/../includes/cabecalho-admin.php'; ?>
 
 <div class="row">
     <article class="col-12 bg-white rounded shadow my-1 py-4">
