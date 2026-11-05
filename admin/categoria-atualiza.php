@@ -1,4 +1,60 @@
-<?php require_once __DIR__ . '/../includes/cabecalho-admin.php'; ?>
+<?php
+
+use Microblog\Helpers\Utils;
+use Microblog\Helpers\Validacoes;
+use Microblog\Models\Categoria;
+use Microblog\Services\Categoriaservico;
+
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$mensagemErro = "";
+$dadosCategoria = null;
+$categoriaServico = null;
+
+ $id = Utils::normalizarEntrada($_GET['id'] ?? null, 'inteiro');
+
+ Utils::verificarId($id);
+
+ try {
+    $categoriaServico = new Categoriaservico();
+    $dadosCategoria = $categoriaServico->buscarPorId($id);
+
+ } catch (Throwable $e) {
+    Utils::registrarLog($e);
+    $mensagemErro = "Não foi possível carregar os dados da categoria";
+ }
+
+ if($dadosCategoria === null && $mensagemErro === ""){
+    Utils::alertaErro("Categoria não encontrado!");
+ }
+
+    $nome = $dadosCategoria['nome'] ?? "";
+    
+    if($_SERVER["REQUEST_METHOD"] === "POST"){
+        try {
+            $nome = Utils::normalizarEntrada($_POST['nome'] ?? "");
+            
+            Validacoes::validarNome($nome);
+            
+            $categoria = new Categoria($nome, $id);
+
+            $categoriaServico->atualizar($categoria);
+
+            header("location:categorias.php");
+            exit;
+
+        } catch (InvalidArgumentException $e) {
+            
+        } catch (Throwable $e) {
+            Utils::registrarLog($e);
+            $mensagemErro = "Não foi possível atualizar a categoria. Tente novamente";
+            
+        }
+    }
+ 
+
+require_once __DIR__ . '/../includes/cabecalho-admin.php'; ?>
 
 <div class="row">
     <article class="col-12 bg-white rounded shadow my-1 py-4">
