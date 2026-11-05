@@ -46,7 +46,7 @@ final class Categoriaservico
             
        } catch (PDOException $e) {
                 Utils::registrarLog($e);
-                throw new Exception("Erro ao inserir usuário");
+                throw new Exception("Erro ao inserir Categoria");
             }
     }
 }
