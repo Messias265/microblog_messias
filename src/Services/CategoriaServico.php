@@ -81,4 +81,17 @@ public function buscarPorId(int $id): ?array
             throw new Exception("Erro ao atualizar categoria");
         }
     }
+
+    public function excluir(int $id):void
+    {
+        $sql = "DELETE FROM categorias WHERE id = :id";
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":id", $id);
+            $consulta->execute();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao excluir categoria");
+        }
+    }
 }
