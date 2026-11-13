@@ -3,10 +3,11 @@ namespace Microblog\Models;
 
 use Microblog\Enums\TipoUsuario;
 
- final class Usuario
+final class Usuario
 {
-    /* Alteramos a forma dos tipos desta propriedade para definir que ela pode aceitar int OU null */
-    //private int | null $id
+    /* Alteramos a forma dos tipos desta propriedade
+    para definir que ela pode aceitar int OU null */
+    // private int | null $id;
     private ?int $id;
 
     private string $nome;
@@ -19,7 +20,7 @@ use Microblog\Enums\TipoUsuario;
         string $email,
         string $senha,
         TipoUsuario $tipo = TipoUsuario::EDITOR,
-        ?int $id = null // parâmetro opcional e com valor padrão
+        ?int $id = null // parâmetro opcional e com valor padrão null
     ) {
         $this->nome = $nome;
         $this->email = $email;

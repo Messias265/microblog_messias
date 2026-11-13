@@ -1,35 +1,37 @@
 <?php
 namespace Microblog\Auth;
 
+use Microblog\Enums\TipoUsuario;
+
 /* Sessões no PHP
-Funcionalidade usada para controlar o acesso a determinadas páginas e recursos de um site/aplicação.
+Funcionalidade usada para controlar o acesso a determinadas
+páginas e recursos de um site/aplicação.
 
-Exemplos: áreas administrativas, painel de controle, área de cliente/aluno. 
+Exemplos: áreas administrativas, painel de controle, área de cliente/aluno.
 
-Nessas áreas, o acesso depende de alguma forma de autenticação, como login e senha, biometria, por dois fatores etc.
-*/
+Nessas áreas, o acesso depende de alguma forma de autenticação, como login e senha, biometria, por dois fatores etc. */
 
 final class ControleDeAcesso
 {
     // Impedir a criação de objeto/instância
-    private function __construct(){}
+    private function __construct() {}
 
     // Inicia a sessão se ela ainda não estiver ativa
-    private static function iniciarSessao():void
+    private static function iniciarSessao(): void
     {
         // Se o status da sessão NÃO FOR ativa (ou, se a sessão está inativa)
         if(session_status() !== PHP_SESSION_ACTIVE){
             // Então, iniciamos a sessão
             session_start();
-
         }
     }
-    public static function encerrarSessao(): void
+
+    private static function encerrarSessao():void
     {
-        $_SESSION = []; // limpar os dados do usuário armazenados na sessão 
+        $_SESSION = []; // limpar os dados do usuário armazenados na sessão
         session_destroy(); // destrói/remove quaisquer dados da sessão no navegador
-        
     }
+
 
     public static function exigirLogin(): void
     {
@@ -38,7 +40,7 @@ final class ControleDeAcesso
         // Se NÃO EXISTIR na sessão uma variável chamada id,
         // significa que o usuário NÃO ESTÁ logado
         if(!isset($_SESSION['id'])){
-            // encerrar a sessão (ainda programar)
+            // encerrar a sessão
             self::encerrarSessao();
 
             // redirecionar para a página de login
@@ -47,11 +49,11 @@ final class ControleDeAcesso
         }
     }
 
-    public static function login(int $id, string $nome, string $tipo ): void
+    public static function login(int $id, string $nome, string $tipo): void
     {
         self::iniciarSessao();
 
-        // Cria as variáveis de sessão com os dados de quem está logando 
+        // Cria as variáveis de sessão com alguns dados de quem está logando
         $_SESSION['id'] = $id;
         $_SESSION['nome'] = $nome;
         $_SESSION['tipo'] = $tipo;
@@ -63,5 +65,28 @@ final class ControleDeAcesso
         self::encerrarSessao();
         header("location:../login.php?logout");
         exit;
+    }
+
+    // Verifica se o usuário logado é do tipo admin
+    public static function usuarioEhAdmin(): bool 
+    {
+        self::iniciarSessao();
+        
+        // Se variável de sessão 'tipo' existe E o valor dela é 'admin'
+        // então significa que o usuário logado é um administrador
+        return isset($_SESSION['tipo']) && $_SESSION['tipo'] === TipoUsuario::ADMIN->value;
+    }
+
+    public static function exigirAdmin(): void
+    {
+        // Garanta que está logado
+        self::exigirLogin();
+        
+        // Verifica se NÃO É um admin
+        if(!self::usuarioEhAdmin()){
+            // Não sendo, manda pra página nao-autorizado
+            header("location:nao-autorizado.php");
+            exit;
+        }
     }
 }

@@ -1,50 +1,26 @@
-# Resumo do histórico do projeto
+# Resumo do histórico da branch
 
-Este resumo reúne os principais pontos registrados no histórico Git da branch `02_aula-0411`, até o commit `88b021e` (`Preenche dados no formulário de função no usuário`), de 4 de novembro de 2026.
+Branch analisada: `06_aula-1211`
 
-## Principais etapas
+Período dos commits: 10/11/2026 a 12/11/2026
 
-1. **Estrutura inicial do Microblog (`bbb8d28`)**
-   - Projeto didático de portal de notícias em PHP, com áreas pública e administrativa.
-   - Inclusão das páginas, componentes compartilhados, estilos, imagens e scripts iniciais.
-   - Inclusão dos modelos, conexão PDO, enums, helpers, scripts SQL e materiais de apoio.
-   - A listagem administrativa de usuários ainda exibia dados estáticos de exemplo.
+## Principais pontos trabalhados
 
-2. **Ajustes na página inicial (`3193500`)**
-   - Pequena reorganização da abertura do arquivo `index.php`, sem mudança funcional aparente.
+1. **Ativação do fluxo de autenticação (`007e174`, `4089c21`, `5f49e17`, `92b0850`)**
+   Foi implementada a busca de usuário por e-mail no login, a validação dos dados informados e o fluxo completo de autenticação. Em seguida, foi adicionado o logout do administrador e a lógica de sessão para manter o usuário autenticado e redirecioná-lo em caso de saída.
 
-3. **Organização de namespaces e autoload (`7901f1a`)**
-   - Configuração do Composer com mapeamento PSR-4 `Microblog\` para `src/`.
-   - Inclusão de `/vendor/` no `.gitignore`.
-   - Adoção de namespaces nos helpers e modelos de notícia e usuário, com referências aos enums correspondentes.
+2. **Proteção por sessão e controle de acesso (`703c860`, `81fe9e4`, `834fdc0`, `3e6d1b6`, `90add18`, `2b4f842`, `e3b7c54`, `4ab3a7c`)**
+   A classe `ControleDeAcesso` foi ampliada para iniciar e encerrar a sessão, exigir login, verificar o tipo do usuário e controlar o acesso às páginas administrativas. O cabeçalho administrativo passou a bloquear usuários sem autenticação, e as telas de gerenciamento passaram a exigir perfil de administrador. Também foi incluída a verificação do tipo de conta na sessão e a restrição dos links administrativos para quem não tem permissão.
 
-4. **Início do serviço de usuários (`43edde8`, `a07f181`)**
-   - Criação de `UsuarioServico`, responsável por obter a conexão PDO.
-   - Implementação de `listarTodos()`, que consulta os usuários e os ordena pelo nome.
-   - Tratamento de falhas de banco de dados com registro em log e exceção com mensagem genérica.
+3. **Exibição de contexto e feedback do usuário (`3eae4c9`, `f200330`)**
+   As páginas administrativas passaram a exibir detalhes da sessão atual, como nome e tipo de usuário, e o autoload foi carregado antes das verificações de acesso administrativo para garantir que as classes necessárias estejam disponíveis. Isso melhorou o feedback visual e a consistência do fluxo de autenticação.
 
-5. **Integração da listagem no painel (`1024883`, `52dbe9d`)**
-   - A página administrativa carrega o autoload e solicita os usuários ao serviço.
-   - A tabela passou a ser preenchida com os registros retornados, em vez de dados fixos.
-   - Nomes, e-mails, tipos e IDs exibidos são escapados com o helper de HTML.
-   - A quantidade de usuários passou a ser calculada dinamicamente; em caso de falha, a página mostra uma mensagem e não exibe a tabela.
+4. **Gerenciamento de usuários e segurança de exclusão (`65f5568`, `3fc6ff7`, `3a339ea`)**
+   Foi adicionado o método de serviço para exclusão de usuários e implementada a operação completa de remoção. A partir daí, também foi bloqueada a exclusão da própria conta para evitar inconsistências de sessão e manutenção do usuário administrador principal.
 
-6. **Tratamento de erros na listagem (`99565f3`)**
-   - Falhas ao consultar usuários passaram a ser registradas no log, com mensagem amigável na página administrativa.
+5. **Atualização de perfil do usuário (`0ee4efd`)**
+   O painel administrativo recebeu a funcionalidade de atualizar os dados do próprio perfil, permitindo ao usuário alterar informações cadastrais e manter a experiência consistente com o restante do sistema. A operação foi integrada ao fluxo de sessão e à área administrativa.
 
-7. **Cadastro de usuários (`46457b5`, `7cc639d`, `fc76fd8`, `d4be033`, `0f29c61`, `19436f6`)**
-   - `UsuarioServico` ganhou a operação de inserção; a entidade `Usuario` passou a aceitar ID nulo para permitir a criação antes de o banco atribuir o identificador.
-   - O formulário administrativo passou a validar os dados, codificar a senha, converter o tipo para o enum e inserir o usuário; após sucesso, redireciona à listagem.
-   - Erros inesperados são registrados e apresentados com mensagem genérica, enquanto erros de validação são exibidos ao usuário.
-   - Os campos de nome e e-mail mantêm os valores enviados quando há falha. Ajustes nos enums e nos vínculos corrigiram a integração do cadastro.
-   - Os commits também atualizaram `logs/erros.log` durante a investigação e correção dos problemas.
+## Estado resultante
 
-8. **Busca e carregamento para atualização (`54498d3`, `d464b08`, `88b021e`)**
-   - `UsuarioServico` ganhou `buscarPorId(int $id)`, que consulta o usuário e retorna `null` quando não há registro; falhas são registradas e propagadas como exceção.
-   - A página de atualização normaliza e verifica o ID, busca os dados, trata falhas ou usuário inexistente e preenche nome, e-mail e tipo, escapando os valores textuais para HTML.
-
-## Estado atual
-
-O painel já lista usuários dinamicamente, permite cadastrar usuários e carrega os dados existentes no formulário de atualização. O histórico analisado ainda não implementa o salvamento das alterações feitas nesse formulário.
-
-As alterações de 4 de novembro também incluem registros e remoções em `logs/erros.log` relacionados à depuração. A sequência de commits do dia vai de `99565f3` a `88b021e`; o commit mais recente completa o preenchimento do formulário de atualização.
+A branch inclui um fluxo de autenticação funcional com busca por e-mail, validação de campos, login, logout e controle de sessão. O acesso às áreas administrativas passou a depender do tipo de usuário e da presença de dados de sessão válidos, com bloqueios para visitantes e usuários sem permissão. Também houve melhorias na experiência do painel, como a exibição do contexto da sessão, restrição de links e proteção contra a exclusão do próprio usuário. A área de administração está pronta para operar com autenticação e permissões por perfil, além de permitir atualização do perfil do usuário logado.

@@ -5,7 +5,6 @@ use InvalidArgumentException;
 use Microblog\Enums\Destaque;
 use Microblog\Enums\TipoUsuario;
 
-
 class Validacoes
 {
     private function __construct() {}
