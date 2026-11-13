@@ -3,7 +3,7 @@ namespace Microblog\Services;
 
 use Exception;
 use Microblog\Database\ConexaoBD;
-use Microblog\Enums\Destaque;
+use Microblog\Enums\TipoUsuario;
 use Microblog\Helpers\Utils;
 use Microblog\Models\Noticia;
 use PDO;
@@ -16,6 +16,36 @@ final class NoticiaServico
     public function __construct()
     {
         $this->conexao = ConexaoBD::getConexao();
+    }
+
+    public function listarTodos(TipoUsuario $tipoUsuario, int $usuarioId): array
+    {
+        if ($tipoUsuario === TipoUsuario::ADMIN) {
+            $sql = "SELECT noticias.id, noticias.data, noticias.titulo, noticias.destaque,
+                           usuarios.nome AS autor
+                    FROM noticias
+                    LEFT JOIN usuarios ON noticias.usuario_id = usuarios.id
+                    ORDER BY noticias.data DESC";
+        } else {
+            $sql = "SELECT id, data, titulo, destaque
+                    FROM noticias
+                    WHERE usuario_id = :usuario_id
+                    ORDER BY data DESC";
+        }
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+
+            if ($tipoUsuario === TipoUsuario::EDITOR) {
+                $consulta->bindValue(":usuario_id", $usuarioId);
+            }
+
+            $consulta->execute();
+            return $consulta->fetchAll();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao listar notícias");
+        }
     }
 
     public function inserir(Noticia $noticia ): void
