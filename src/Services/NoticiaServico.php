@@ -3,6 +3,7 @@ namespace Microblog\Services;
 
 use Exception;
 use Microblog\Database\ConexaoBD;
+use Microblog\Enums\Destaque;
 use Microblog\Helpers\Utils;
 use Microblog\Models\Noticia;
 use PDO;
@@ -21,7 +22,7 @@ final class NoticiaServico
     {
         $sql = "INSERT INTO noticias (
         titulo, texto, resumo, imagem, destaque, usuario_id, categoria_id ) VALUES(
-          :titulo, :texto, :resumo, :imagem, :zdestaque, :usuario_id, :categoria_id
+          :titulo, :texto, :resumo, :imagem, :destaque, :usuario_id, :categoria_id
         )";
 
         try {
@@ -31,9 +32,9 @@ final class NoticiaServico
             $consulta->bindValue(":texto", $noticia->getTexto());
             $consulta->bindValue(":resumo", $noticia->getResumo());
             $consulta->bindValue(":imagem", $noticia->getImagem());
-            $consulta->bindValue(":destaque", $noticia->getDestaque());
-            $consulta->bindValue(":usuario_id", $noticia->getCategoriaId());
-            $consulta->bindValue(":categoria_id", $noticia->getUsuarioId());
+            $consulta->bindValue(":destaque", $noticia->getDestaque()->value);
+            $consulta->bindValue(":usuario_id", $noticia->getUsuarioId());
+            $consulta->bindValue(":categoria_id", $noticia->getCategoriaId());
 
             $consulta->execute();
             

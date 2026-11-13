@@ -1,0 +1,15 @@
+[2026-11-13 10:49:18]
+Arquivo: C:\backend\microblog_messias\src\Services\NoticiaServico.php
+Linha: 34
+Mensagem: Object of class Microblog\Enums\Destaque could not be converted to string
+
+[2026-11-13 10:50:52]
+Arquivo: C:\backend\microblog_messias\src\Services\NoticiaServico.php
+Linha: 34
+Mensagem: Object of class Microblog\Enums\Destaque could not be converted to string
+
+[2026-11-13 10:53:14]
+Arquivo: C:\backend\microblog_messias\src\Services\NoticiaServico.php
+Linha: 35
+Mensagem: Object of class Microblog\Enums\Destaque could not be converted to string
+

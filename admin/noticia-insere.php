@@ -5,6 +5,7 @@ use Microblog\Helpers\Utils;
 use Microblog\Helpers\Validacoes;
 use Microblog\Models\Noticia;
 use Microblog\Services\CategoriaServico;
+use Microblog\Services\NoticiaServico;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/cabecalho-admin.php';
@@ -53,6 +54,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         // Criando o objeto com os dados da nova notícia
         $noticia = new Noticia($titulo, $texto, $resumo, $nomeDaImagemEnviada, $destaqueEnum, $idUsuario, $categoria);
 
+        // Criando o serviço para poder inserir a nova noticia
+        $noticiaServico = new NoticiaServico();
+        $noticiaServico->inserir($noticia);
+
+        header("location:noticias.php");
+        exit;
     } catch (InvalidArgumentException $e) {
         $mensagemErro = $e->getMessage();
     } catch (Throwable $e) {
