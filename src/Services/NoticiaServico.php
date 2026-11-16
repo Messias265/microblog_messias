@@ -6,6 +6,7 @@ use Microblog\Database\ConexaoBD;
 use Microblog\Enums\TipoUsuario;
 use Microblog\Helpers\Utils;
 use Microblog\Models\Noticia;
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 
@@ -74,6 +75,42 @@ final class NoticiaServico
         } catch (PDOException $e) {
             Utils::registrarLog($e);
             throw new Exception("Erro ao buscar notícia por ID");
+        }
+    }
+
+    public function atualizar(Noticia $noticia, TipoUsuario $tipoUsuario, int $usuarioId): void
+    {
+        if ($noticia->getId() === null) {
+            throw new InvalidArgumentException("Notícia sem ID para atualização.");
+        }
+
+        $sql = "UPDATE noticias
+                SET titulo = :titulo, texto = :texto, resumo = :resumo,
+                    imagem = :imagem, destaque = :destaque, categoria_id = :categoria_id
+                WHERE id = :id";
+
+        if ($tipoUsuario === TipoUsuario::EDITOR) {
+            $sql .= " AND usuario_id = :usuario_id";
+        }
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":titulo", $noticia->getTitulo());
+            $consulta->bindValue(":texto", $noticia->getTexto());
+            $consulta->bindValue(":resumo", $noticia->getResumo());
+            $consulta->bindValue(":imagem", $noticia->getImagem());
+            $consulta->bindValue(":destaque", $noticia->getDestaque()->value);
+            $consulta->bindValue(":categoria_id", $noticia->getCategoriaId());
+            $consulta->bindValue(":id", $noticia->getId());
+
+            if ($tipoUsuario === TipoUsuario::EDITOR) {
+                $consulta->bindValue(":usuario_id", $usuarioId);
+            }
+
+            $consulta->execute();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao atualizar notícia");
         }
     }
 
