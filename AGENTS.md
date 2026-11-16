@@ -30,7 +30,7 @@ Há duas áreas:
 - `src/Services/`: consultas e operações de banco por entidade (`UsuarioServico`, `CategoriaServico`, `NoticiaServico`).
 - `admin/js/`: confirmação de exclusão e contador de caracteres.
 - `includes/`: cabeçalhos, rodapés e consultas/blocos compartilhados.
-- `images/`: imagens usadas nas notícias e ícones.
+- `images/`: imagens usadas nas notícias e ícones; imagens enviadas no painel também são salvas aqui. Nove fotos antes localizadas em `_materiais/Fotos/` foram movidas para este diretório, e seis fotos obsoletas foram removidas.
 - `_materiais/`: dumps SQL e materiais de apoio; podem conter versões antigas.
 - `logs/erros.log`: log de exceções da aplicação.
 
@@ -64,14 +64,16 @@ Há divergências entre materiais antigos e o código atual. Por exemplo, `model
 - `ControleDeAcesso::exigirLogin()` protege o cabeçalho administrativo; as sessões guardam `id`, `nome` e `tipo`.
 - `ControleDeAcesso::exigirAdmin()` é usado pelas telas de gerenciamento de usuários e categorias.
 - `admin/noticias.php` mostra todas as notícias ao administrador e limita editores às próprias notícias por `NoticiaServico::listarTodos()`. A inserção de notícia associa o usuário da sessão como autor.
+- Na edição e exclusão, `NoticiaServico::buscarPorId()`, `atualizar()` e `excluir()` permitem ao administrador operar sobre qualquer notícia e restringem o editor às próprias; a restrição de editor também é aplicada às consultas de atualização e exclusão.
 - **Atenção à divergência documental:** o `README.md` diz que editores podem gerenciar categorias, mas as páginas atuais de categorias chamam `exigirAdmin()`. Ao alterar permissões, siga o requisito pedido e atualize a documentação correspondente.
 - A exclusão da própria conta está bloqueada em `admin/usuario-exclui.php`.
 
 ## Estado funcional conhecido
 
 - `UsuarioServico` e `CategoriaServico` implementam listagem, busca por ID, inserção, atualização e exclusão (além da busca de usuário por e-mail).
-- `NoticiaServico` implementa listagem, busca por ID, inserção, atualização e exclusão. As operações de busca, atualização e exclusão devem preservar o escopo do administrador (qualquer notícia) e do editor (apenas notícias próprias).
-- Em `admin/noticia-insere.php`, a validação de texto está repetida, não há chamada a `Validacoes::validarResumo()` e o valor padrão usado ao normalizar categoria merece correção caso essa página seja alterada.
+- `NoticiaServico` implementa listagem, busca por ID, inserção, atualização e exclusão. `admin/noticia-atualiza.php` valida os campos e a existência da categoria, preserva a imagem atual quando não há novo upload e não altera a autoria nem a data da notícia.
+- `admin/noticia-exclui.php` executa a exclusão por `GET`; a confirmação em `admin/js/confirm.js` é apenas de interface e não impede acesso direto à URL. A operação ainda não usa `POST` nem proteção CSRF.
+- Em `admin/noticia-insere.php`, a validação de texto está repetida, não há chamada a `Validacoes::validarResumo()` e `Utils::normalizarEntrada()` usa `'inteiro'` como valor alternativo da categoria, sem passá-lo como segundo argumento para normalizar o tipo.
 - `Validacoes::validarResumo()` atualmente limita o resumo a 300 caracteres; o formulário de inserção também indica 300.
 
 ## Materiais de referência
