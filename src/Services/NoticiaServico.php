@@ -141,4 +141,31 @@ final class NoticiaServico
         }
             
     }
+
+    public function excluir(int $noticiaId, TipoUsuario $tipoUsuario, int $usuarioId): void
+    {
+        $sql = "DELETE FROM noticias WHERE id = :id";
+
+        if ($tipoUsuario === TipoUsuario::EDITOR) {
+            $sql .= " AND usuario_id = :usuario_id";
+        }
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":id", $noticiaId);
+
+            if ($tipoUsuario === TipoUsuario::EDITOR) {
+                $consulta->bindValue(":usuario_id", $usuarioId);
+            }
+
+            $consulta->execute();
+
+            if ($consulta->rowCount() === 0) {
+                throw new Exception("Notícia não encontrada ou sem permissão para exclusão");
+            }
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao excluir notícia");
+        }
+    }
 }

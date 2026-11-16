@@ -70,7 +70,7 @@ Há divergências entre materiais antigos e o código atual. Por exemplo, `model
 ## Estado funcional conhecido
 
 - `UsuarioServico` e `CategoriaServico` implementam listagem, busca por ID, inserção, atualização e exclusão (além da busca de usuário por e-mail).
-- `NoticiaServico` implementa apenas listagem e inserção. `admin/noticia-atualiza.php` ainda contém conteúdo provisório; `admin/noticia-exclui.php` informa que a operação será implementada. Não trate essas telas como CRUD concluído.
+- `NoticiaServico` implementa listagem, busca por ID, inserção, atualização e exclusão. As operações de busca, atualização e exclusão devem preservar o escopo do administrador (qualquer notícia) e do editor (apenas notícias próprias).
 - Em `admin/noticia-insere.php`, a validação de texto está repetida, não há chamada a `Validacoes::validarResumo()` e o valor padrão usado ao normalizar categoria merece correção caso essa página seja alterada.
 - `Validacoes::validarResumo()` atualmente limita o resumo a 300 caracteres; o formulário de inserção também indica 300.
 
