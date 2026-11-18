@@ -1,5 +1,4 @@
 <?php
-
 use Microblog\Enums\Destaque;
 use Microblog\Helpers\Utils;
 use Microblog\Helpers\Validacoes;
@@ -8,7 +7,7 @@ use Microblog\Services\CategoriaServico;
 use Microblog\Services\NoticiaServico;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../includes/cabecalho-admin.php';
+require_once __DIR__ . '/../includes/cabecalho-admin.php'; 
 
 // Capturando o id do usuário logado, ao qual a notícia que será inserida pertencerá
 $idUsuario = $_SESSION['id'];
@@ -23,6 +22,7 @@ $destaque = Destaque::NAO->value;
 $categoria = '';
 $categoriasCarregadas = false;
 
+// Carregamento das categorias
 try {
     $categoriaServico = new CategoriaServico();
     $listaDeCategorias = $categoriaServico->listarTodos();
@@ -34,22 +34,22 @@ try {
 
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
     try {
-        $titulo = Utils::normalizarEntrada($_POST['titulo'] ?? '');
-        $texto = Utils::normalizarEntrada($_POST['texto'] ?? '');
-        $resumo = Utils::normalizarEntrada($_POST['resumo'] ?? '');
+        $titulo = Utils::normalizarEntrada($_POST['titulo'] ?? '');    
+        $texto = Utils::normalizarEntrada($_POST['texto'] ?? '');    
+        $resumo = Utils::normalizarEntrada($_POST['resumo'] ?? '');    
         $destaque = Utils::normalizarEntrada($_POST['destaque'] ?? '');
-        $categoria = Utils::normalizarEntrada($_POST['categoria'] ?? 'inteiro');
+        $categoria = Utils::normalizarEntrada($_POST['categoria'] ?? '', 'inteiro');
 
         Validacoes::validarCategoria($categoria);
         Validacoes::validarTitulo($titulo);
         Validacoes::validarTexto($texto);
-        Validacoes::validarTexto($texto);
+        Validacoes::validarResumo($resumo);
         Validacoes::validarDestaque($destaque);
 
         $destaqueEnum = Destaque::from($destaque); // associando ao ENUM
 
         // Processo da imagem
-        $nomeDaImagemEnviada = Utils:: upload($_FILES['imagem'] ?? null);
+        $nomeDaImagemEnviada = Utils::upload($_FILES['imagem'] ?? null);
 
         // Criando o objeto com os dados da nova notícia
         $noticia = new Noticia($titulo, $texto, $resumo, $nomeDaImagemEnviada, $destaqueEnum, $idUsuario, $categoria);
@@ -72,30 +72,32 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
 <div class="row">
     <article class="col-12 bg-white rounded shadow my-1 py-4">
         <h2 class="text-center">Inserir nova notícia</h2>
-        
+
         <?php if($mensagemErro !== ""): ?>
             <div class="alert alert-danger text-center">
                 <?= Utils::escaparHtml($mensagemErro) ?>
             </div>
-        <?php endif; ?>        
+        <?php endif; ?>
 
         <?php if($categoriasCarregadas): ?>
         <form class="mx-auto w-75" action="" method="post" id="form-inserir" name="form-inserir" enctype="multipart/form-data">
             <div class="mb-3">
                 <label class="form-label" for="categoria">Categoria:</label>
                 <select class="form-select" name="categoria" id="categoria">
-                  <option value=""></option>
+                    <option value=""></option>
 
-                  <?php foreach($listaDeCategorias as $itemCategoria): ?>
-                        <option value="<?= Utils::escaparHtml($itemCategoria['id']) ?>"> 
-                            <?= Utils::escaparHtml($itemCategoria['nome'])  ?>
+                    <?php foreach($listaDeCategorias as $itemCategoria): ?>
+                        <option value="<?= Utils::escaparHtml($itemCategoria['id']) ?>">
+                            <?= Utils::escaparHtml($itemCategoria['nome']) ?>
                         </option>
-                  <?php endforeach; ?>
+                    <?php endforeach; ?>
+
                 </select>
             </div>
             <div class="mb-3">
                 <label class="form-label" for="titulo">Título:</label>
-                <input class="form-control" type="text" id="titulo" name="titulo" value="<?= Utils::escaparHtml($titulo) ?>">
+                <input class="form-control" type="text" id="titulo" name="titulo" 
+                value="<?= Utils::escaparHtml($titulo) ?>">
             </div>
             <div class="mb-3">
                 <label class="form-label" for="texto">Texto:</label>
@@ -120,6 +122,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             <button class="btn btn-primary" id="inserir" name="inserir"><i class="bi bi-save"></i> Inserir</button>
         </form>
         <?php endif; ?>
+
     </article>
 </div>
 

@@ -11,10 +11,12 @@ ControleDeAcesso::exigirLogin();
 
 $mensagemErro = "";
 $listaDeNoticias = [];
-$tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
-$usuarioEhAdmin = $tipoUsuario === TipoUsuario::ADMIN;
+$ehAdmin = false;
 
 try {
+    $tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
+    $ehAdmin = $tipoUsuario === TipoUsuario::ADMIN;
+
     $noticiaServico = new NoticiaServico();
     $listaDeNoticias = $noticiaServico->listarTodos($tipoUsuario, (int) $_SESSION['id']);
 } catch (Throwable $e) {
@@ -50,7 +52,7 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
                         <tr>
                             <th>Título</th>
                             <th>Data</th>
-                            <?php if ($usuarioEhAdmin): ?>
+                            <?php if ($ehAdmin): ?>
                                 <th>Autor</th>
                             <?php endif; ?>
                             <th class="text-center">Destaque</th>
@@ -58,34 +60,26 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($listaDeNoticias === []): ?>
+                        <?php foreach ($listaDeNoticias as $itemNoticia): ?>
                             <tr>
-                                <td colspan="<?= $usuarioEhAdmin ? 6 : 5 ?>" class="text-center">
-                                    Nenhuma notícia cadastrada.
+                                <td><?= Utils::escaparHtml($itemNoticia['titulo']) ?></td>
+                                <td><?= Utils::escaparHtml(Utils::formataData($itemNoticia['data'])) ?></td>
+                                <?php if ($ehAdmin): ?>
+                                    <td><?= Utils::escaparHtml($itemNoticia['autor'] ?? 'Usuário deletado') ?></td>
+                                <?php endif; ?>
+                                <td class="text-center"><?= Utils::escaparHtml($itemNoticia['destaque']) ?></td>
+                                <td class="text-center">
+                                    <a class="btn btn-warning btn-sm" href="noticia-atualiza.php?id=<?= Utils::escaparHtml($itemNoticia['id']) ?>">
+                                        <i class="bi bi-pencil"></i> Atualizar
+                                    </a>
+                                </td>
+                                <td>
+                                    <a class="btn btn-danger excluir btn-sm" href="noticia-exclui.php?id=<?= Utils::escaparHtml($itemNoticia['id']) ?>">
+                                        <i class="bi bi-trash"></i> Excluir
+                                    </a>
                                 </td>
                             </tr>
-                        <?php else: ?>
-                            <?php foreach ($listaDeNoticias as $itemNoticia): ?>
-                                <tr>
-                                    <td><?= Utils::escaparHtml($itemNoticia['titulo']) ?></td>
-                                    <td><?= Utils::escaparHtml(Utils::formataData($itemNoticia['data'])) ?></td>
-                                    <?php if ($usuarioEhAdmin): ?>
-                                        <td><?= Utils::escaparHtml($itemNoticia['autor'] ?? '') ?></td>
-                                    <?php endif; ?>
-                                    <td class="text-center"><?= Utils::escaparHtml($itemNoticia['destaque']) ?></td>
-                                    <td class="text-center">
-                                        <a class="btn btn-warning btn-sm" href="noticia-atualiza.php?id=<?= Utils::escaparHtml($itemNoticia['id']) ?>">
-                                            <i class="bi bi-pencil"></i> Atualizar
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a class="btn btn-danger excluir btn-sm" href="noticia-exclui.php?id=<?= Utils::escaparHtml($itemNoticia['id']) ?>">
-                                            <i class="bi bi-trash"></i> Excluir
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>

@@ -1,3 +1,22 @@
+<?php
+
+use Microblog\Helpers\Utils;
+use Microblog\Services\CategoriaServico;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$listaDeCategorias = [];
+$erroAoCarregarCategorias = false;
+
+try {
+  $categoriaServico = new CategoriaServico();
+  $listaDeCategorias = $categoriaServico->listarTodos();
+} catch (Throwable $e) {
+  Utils::registrarLog($e);
+  $erroAoCarregarCategorias = true;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br" class="h-100">
 
@@ -28,10 +47,19 @@
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Categorias</a>
               <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-
-                <li><a class="dropdown-item" href="noticias-por-categoria.php?id=1">Desenvolvimento</a></li>
-                <li><a class="dropdown-item" href="noticias-por-categoria.php?id=2">Tecnologia</a></li>
-                
+                <?php if ($erroAoCarregarCategorias): ?>
+                  <li><span class="dropdown-item-text text-danger">Não foi possível carregar as categorias.</span></li>
+                <?php elseif ($listaDeCategorias === []): ?>
+                  <li><span class="dropdown-item-text">Nenhuma categoria cadastrada.</span></li>
+                <?php else: ?>
+                  <?php foreach ($listaDeCategorias as $categoria): ?>
+                    <li>
+                      <a class="dropdown-item" href="noticias-por-categoria.php?id=<?= Utils::escaparHtml($categoria['id']) ?>">
+                        <?= Utils::escaparHtml($categoria['nome']) ?>
+                      </a>
+                    </li>
+                  <?php endforeach; ?>
+                <?php endif; ?>
               </ul>
             </li>
             <li class="nav-item"><a class="nav-link" href="admin/index.php"><i class="bi bi-lock-fill"></i> Área administrativa</a></li>
@@ -39,7 +67,7 @@
 
           <div class="position-relative">
             <form autocomplete="off" class="d-flex" action="resultados.php" method="POST" onsubmit="return false" id="form-busca">
-              <input id="campo-busca" name="busca" class="form-control me-2" type="search" placeholder="Pesquise aqui" aria-label="Pesquise aqui" maxlength="100">
+              <input id="campo-busca" name="busca" class="form-control me-2" type="search" placeholder="Pesquise aqui" aria-label="Pesquise aqui" aria-controls="resultados" minlength="2" maxlength="100">
             </form>
             <div id="resultados" class="mt-3 position-absolute container bg-white shadow-lg p-3 rounded" role="status" aria-live="polite" aria-atomic="true" aria-busy="false" hidden></div>
           </div>

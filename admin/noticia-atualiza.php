@@ -13,82 +13,63 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 ControleDeAcesso::exigirLogin();
 
-$metodo = $_SERVER['REQUEST_METHOD'];
-$idRecebido = $metodo === 'POST'
-    ? ($_POST['id'] ?? null)
-    : ($_GET['id'] ?? null);
-$id = Utils::normalizarEntrada($idRecebido, 'inteiro');
+$id = Utils::normalizarEntrada($_GET['id'] ?? null, 'inteiro');
 Utils::verificarId($id);
 
 $mensagemErro = "";
-$listaDeCategorias = [];
 $dadosNoticia = null;
-$titulo = "";
-$texto = "";
-$resumo = "";
-$destaque = "";
-$categoriaId = "";
-$imagem = "";
+$tipoUsuario = null;
+$listaDeCategorias = [];
+$categoriasCarregadas = false;
+$usuarioId = (int) $_SESSION['id'];
 
 try {
+    $tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
+
+    $noticiaServico = new NoticiaServico();
+    $dadosNoticia = $noticiaServico->buscarPorId($tipoUsuario, $usuarioId, $id);
+
+    if ($dadosNoticia === null) {
+        Utils::alertaErro("Notícia não encontrada ou você não tem permissão para acessá-la.");
+    }
+
     $categoriaServico = new CategoriaServico();
     $listaDeCategorias = $categoriaServico->listarTodos();
+    $categoriasCarregadas = true;
 } catch (Throwable $e) {
     Utils::registrarLog($e);
-    $mensagemErro = "Não foi possível carregar as categorias";
+    $mensagemErro = "Não foi possível carregar os dados da notícia";
 }
 
-$tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
-$usuarioId = (int) $_SESSION['id'];
-$noticiaServico = null;
+$titulo = $dadosNoticia['titulo'] ?? '';
+$texto = $dadosNoticia['texto'] ?? '';
+$resumo = $dadosNoticia['resumo'] ?? '';
+$categoriaId = $dadosNoticia['categoria_id'] ?? '';
+$destaque = $dadosNoticia['destaque'] ?? Destaque::NAO->value;
+$imagem = $dadosNoticia['imagem'] ?? '';
 
-if ($mensagemErro === "") {
-    try {
-        $noticiaServico = new NoticiaServico();
-        $dadosNoticia = $noticiaServico->buscarPorId($tipoUsuario, $usuarioId, $id);
-    } catch (Throwable $e) {
-        Utils::registrarLog($e);
-        $mensagemErro = "Não foi possível carregar os dados da notícia";
-    }
-}
-
-if ($dadosNoticia === null && $mensagemErro === "") {
-    Utils::alertaErro("Notícia não encontrada!");
-}
-
-if ($dadosNoticia !== null) {
-    $titulo = $dadosNoticia['titulo'];
-    $texto = $dadosNoticia['texto'];
-    $resumo = $dadosNoticia['resumo'];
-    $destaque = $dadosNoticia['destaque'];
-    $categoriaId = $dadosNoticia['categoria_id'] === null
-        ? ""
-        : (string) $dadosNoticia['categoria_id'];
-    $imagem = $dadosNoticia['imagem'];
-}
-
-if ($metodo === 'POST' && $mensagemErro === "" && $dadosNoticia !== null) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dadosNoticia !== null && $categoriasCarregadas) {
     try {
         $titulo = Utils::normalizarEntrada($_POST['titulo'] ?? '');
         $texto = Utils::normalizarEntrada($_POST['texto'] ?? '');
         $resumo = Utils::normalizarEntrada($_POST['resumo'] ?? '');
-        $destaque = Utils::normalizarEntrada($_POST['destaque'] ?? '');
         $categoriaId = Utils::normalizarEntrada($_POST['categoria'] ?? '', 'inteiro');
+        $destaque = Utils::normalizarEntrada($_POST['destaque'] ?? '');
 
         Validacoes::validarTitulo($titulo);
         Validacoes::validarTexto($texto);
         Validacoes::validarResumo($resumo);
-        Validacoes::validarDestaque($destaque);
         Validacoes::validarCategoria($categoriaId);
-
-        if ($categoriaServico->buscarPorId($categoriaId) === null) {
-            throw new InvalidArgumentException("Selecione uma categoria válida.");
-        }
+        Validacoes::validarDestaque($destaque);
 
         $destaqueEnum = Destaque::from($destaque);
-        $erroImagem = $_FILES['imagem']['error'] ?? UPLOAD_ERR_NO_FILE;
-        if ($erroImagem !== UPLOAD_ERR_NO_FILE) {
-            $imagem = Utils::upload($_FILES['imagem'] ?? null);
+
+        $arquivoEnviado = $_FILES['imagem'] ?? null;
+        $imagemSemAlteracao = $arquivoEnviado === null ||
+            (is_array($arquivoEnviado) && ($arquivoEnviado['error'] ?? null) === UPLOAD_ERR_NO_FILE);
+
+        if (!$imagemSemAlteracao) {
+            $imagem = Utils::upload($arquivoEnviado);
         }
 
         $noticia = new Noticia(
@@ -97,11 +78,13 @@ if ($metodo === 'POST' && $mensagemErro === "" && $dadosNoticia !== null) {
             $resumo,
             $imagem,
             $destaqueEnum,
-            $dadosNoticia['usuario_id'] === null ? null : (int) $dadosNoticia['usuario_id'],
+            (int) ($dadosNoticia['usuario_id'] ?? $usuarioId),
             $categoriaId,
-            $id
+            (int) $dadosNoticia['id'],
+            $dadosNoticia['data']
         );
-        $noticiaServico->atualizar($noticia, $tipoUsuario, $usuarioId);
+
+        $noticiaServico->atualizar($tipoUsuario, $usuarioId, $noticia);
 
         header("location:noticias.php");
         exit;
@@ -109,7 +92,7 @@ if ($metodo === 'POST' && $mensagemErro === "" && $dadosNoticia !== null) {
         $mensagemErro = $e->getMessage();
     } catch (Throwable $e) {
         Utils::registrarLog($e);
-        $mensagemErro = "Não foi possível atualizar a notícia";
+        $mensagemErro = "Não foi possível atualizar a notícia. Tente novamente.";
     }
 }
 
@@ -126,15 +109,16 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
             </div>
         <?php endif; ?>
 
-        <?php if ($dadosNoticia !== null): ?>
+        <?php if ($dadosNoticia !== null && $categoriasCarregadas): ?>
             <form class="mx-auto w-75" action="" method="post" id="form-atualizar" name="form-atualizar" enctype="multipart/form-data">
-                <input type="hidden" name="id" value="<?= Utils::escaparHtml($id) ?>">
                 <div class="mb-3">
                     <label class="form-label" for="categoria">Categoria:</label>
                     <select class="form-select" name="categoria" id="categoria">
-                        <option value="" <?= $categoriaId === '' ? 'selected' : '' ?>></option>
+                        <option value="" <?= $dadosNoticia['categoria_id'] === null ? 'selected' : '' ?>></option>
                         <?php foreach ($listaDeCategorias as $itemCategoria): ?>
-                            <option value="<?= Utils::escaparHtml($itemCategoria['id']) ?>" <?= (string) $itemCategoria['id'] === (string) $categoriaId ? 'selected' : '' ?>>
+                            <option
+                                value="<?= Utils::escaparHtml($itemCategoria['id']) ?>"
+                                <?= (int) $itemCategoria['id'] === (int) $categoriaId ? 'selected' : '' ?>>
                                 <?= Utils::escaparHtml($itemCategoria['nome']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -142,7 +126,12 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="titulo">Título:</label>
-                    <input value="<?= Utils::escaparHtml($titulo) ?>" class="form-control" type="text" id="titulo" name="titulo">
+                    <input
+                        value="<?= Utils::escaparHtml($titulo) ?>"
+                        class="form-control"
+                        type="text"
+                        id="titulo"
+                        name="titulo">
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="texto">Texto:</label>
@@ -157,10 +146,19 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
                     <div class="row">
                         <div class="col-5">
                             <label for="imagem-existente" class="form-label">Imagem atual:</label>
-                            <input value="<?= Utils::escaparHtml($imagem) ?>" class="form-control" type="text" id="imagem-existente" readonly disabled>
+                            <input
+                                value="<?= Utils::escaparHtml($imagem) ?>"
+                                class="form-control"
+                                type="text"
+                                id="imagem-existente"
+                                readonly
+                                disabled>
                         </div>
                         <div class="col-7 text-end">
-                            <img src="../images/<?= Utils::escaparHtml($imagem) ?>" alt="Imagem da notícia" class="img-fluid rounded">
+                            <img
+                                src="../images/<?= Utils::escaparHtml($imagem) ?>"
+                                alt="Imagem da notícia"
+                                class="img-fluid rounded">
                         </div>
                     </div>
                 </div>
@@ -170,12 +168,28 @@ require_once __DIR__ . '/../includes/cabecalho-admin.php';
                 </div>
                 <div class="mb-3">
                     <p>Deixar a notícia em destaque?</p>
-                    <input type="radio" class="btn-check" name="destaque" id="option1" autocomplete="off" value="nao" <?= $destaque === 'nao' ? 'checked' : '' ?>>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="destaque"
+                        id="option1"
+                        autocomplete="off"
+                        value="<?= Destaque::NAO->value ?>"
+                        <?= $destaque === Destaque::NAO->value ? 'checked' : '' ?>>
                     <label class="btn btn-outline-danger" for="option1">Não</label>
-                    <input type="radio" class="btn-check" name="destaque" id="option2" autocomplete="off" value="sim" <?= $destaque === 'sim' ? 'checked' : '' ?>>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="destaque"
+                        id="option2"
+                        autocomplete="off"
+                        value="<?= Destaque::SIM->value ?>"
+                        <?= $destaque === Destaque::SIM->value ? 'checked' : '' ?>>
                     <label class="btn btn-outline-success" for="option2">Sim</label>
                 </div>
-                <button class="btn btn-primary" name="atualizar"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+                <button class="btn btn-primary" name="atualizar">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </button>
             </form>
         <?php endif; ?>
     </article>

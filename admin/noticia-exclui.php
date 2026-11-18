@@ -12,12 +12,17 @@ ControleDeAcesso::exigirLogin();
 $id = Utils::normalizarEntrada($_GET['id'] ?? null, 'inteiro');
 Utils::verificarId($id);
 
-$tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
-$usuarioId = (int) $_SESSION['id'];
-
 try {
+    $tipoUsuario = TipoUsuario::from($_SESSION['tipo']);
+    $usuarioId = (int) $_SESSION['id'];
     $noticiaServico = new NoticiaServico();
-    $noticiaServico->excluir($id, $tipoUsuario, $usuarioId);
+    $dadosNoticia = $noticiaServico->buscarPorId($tipoUsuario, $usuarioId, $id);
+
+    if ($dadosNoticia === null) {
+        Utils::alertaErro("Notícia não encontrada ou você não tem permissão para excluí-la.");
+    }
+
+    $noticiaServico->excluir($tipoUsuario, $usuarioId, $id);
     header("location:noticias.php");
     exit;
 } catch (Throwable $e) {

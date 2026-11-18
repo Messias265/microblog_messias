@@ -1,4 +1,5 @@
 <?php
+
 namespace Microblog\Services;
 
 use Exception;
@@ -6,7 +7,6 @@ use Microblog\Database\ConexaoBD;
 use Microblog\Enums\TipoUsuario;
 use Microblog\Helpers\Utils;
 use Microblog\Models\Noticia;
-use InvalidArgumentException;
 use PDO;
 use PDOException;
 
@@ -19,28 +19,33 @@ final class NoticiaServico
         $this->conexao = ConexaoBD::getConexao();
     }
 
+
     public function listarTodos(TipoUsuario $tipoUsuario, int $usuarioId): array
     {
         if ($tipoUsuario === TipoUsuario::ADMIN) {
-            $sql = "SELECT noticias.id, noticias.data, noticias.titulo, noticias.destaque,
+            $sql = "SELECT noticias.id, noticias.titulo, noticias.data, noticias.destaque,
                            usuarios.nome AS autor
                     FROM noticias
                     LEFT JOIN usuarios ON noticias.usuario_id = usuarios.id
                     ORDER BY noticias.data DESC";
-        } else {
-            $sql = "SELECT id, data, titulo, destaque
-                    FROM noticias
-                    WHERE usuario_id = :usuario_id
-                    ORDER BY data DESC";
+
+            try {
+                $consulta = $this->conexao->query($sql);
+                return $consulta->fetchAll();
+            } catch (PDOException $e) {
+                Utils::registrarLog($e);
+                throw new Exception("Erro ao listar notícias");
+            }
         }
+
+        $sql = "SELECT id, titulo, data, destaque
+                FROM noticias
+                WHERE usuario_id = :usuario_id
+                ORDER BY data DESC";
 
         try {
             $consulta = $this->conexao->prepare($sql);
-
-            if ($tipoUsuario === TipoUsuario::EDITOR) {
-                $consulta->bindValue(":usuario_id", $usuarioId);
-            }
-
+            $consulta->bindValue(":usuario_id", $usuarioId);
             $consulta->execute();
             return $consulta->fetchAll();
         } catch (PDOException $e) {
@@ -49,16 +54,100 @@ final class NoticiaServico
         }
     }
 
+    public function listarDestaques(): array
+    {
+        $sql = "SELECT id, titulo, resumo, imagem
+                FROM noticias
+                WHERE destaque = :destaque
+                ORDER BY data DESC";
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":destaque", "sim");
+            $consulta->execute();
+            return $consulta->fetchAll();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao listar notícias em destaque");
+        }
+    }
+
+    public function listarTodasPublicas(): array
+    {
+        $sql = "SELECT id, data, titulo, resumo
+                FROM noticias
+                ORDER BY data DESC";
+
+        try {
+            $consulta = $this->conexao->query($sql);
+            return $consulta->fetchAll();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao listar notícias");
+        }
+    }
+
+    public function listarPorCategoria(int $categoriaId): array
+    {
+        $sql = "SELECT noticias.id, noticias.data, noticias.titulo, noticias.resumo,
+                        usuarios.nome AS autor
+                FROM noticias
+                LEFT JOIN usuarios ON noticias.usuario_id = usuarios.id
+                WHERE noticias.categoria_id = :categoria_id
+                ORDER BY noticias.data DESC";
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":categoria_id", $categoriaId);
+            $consulta->execute();
+            return $consulta->fetchAll();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao listar notícias por categoria");
+        }
+    }
+
+    public function buscarPorTermo(string $termo): array
+    {
+        $termo = strtr($termo, [
+            "!" => "!!",
+            "%" => "!%",
+            "_" => "!_",
+        ]);
+        $termo = "%" . $termo . "%";
+
+        $sql = "SELECT id, titulo
+                FROM noticias
+                WHERE titulo LIKE :titulo ESCAPE '!'
+                   OR resumo LIKE :resumo ESCAPE '!'
+                   OR texto LIKE :texto ESCAPE '!'
+                ORDER BY data DESC
+                LIMIT 10";
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":titulo", $termo);
+            $consulta->bindValue(":resumo", $termo);
+            $consulta->bindValue(":texto", $termo);
+            $consulta->execute();
+            return $consulta->fetchAll();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao pesquisar notícias");
+        }
+    }
+
     public function buscarPorId(TipoUsuario $tipoUsuario, int $usuarioId, int $noticiaId): ?array
     {
         $sql = "SELECT noticias.id, noticias.data, noticias.titulo, noticias.texto,
-                       noticias.resumo, noticias.imagem, noticias.destaque,
-                       noticias.usuario_id, noticias.categoria_id, usuarios.nome AS autor
+                        noticias.resumo, noticias.imagem, noticias.destaque,
+                        noticias.usuario_id, noticias.categoria_id,
+                        usuarios.nome AS autor
                 FROM noticias
                 LEFT JOIN usuarios ON noticias.usuario_id = usuarios.id
                 WHERE noticias.id = :noticia_id";
 
-        if ($tipoUsuario === TipoUsuario::EDITOR) {
+        if ($tipoUsuario !== TipoUsuario::ADMIN) {
             $sql .= " AND noticias.usuario_id = :usuario_id";
         }
 
@@ -66,7 +155,7 @@ final class NoticiaServico
             $consulta = $this->conexao->prepare($sql);
             $consulta->bindValue(":noticia_id", $noticiaId);
 
-            if ($tipoUsuario === TipoUsuario::EDITOR) {
+            if ($tipoUsuario !== TipoUsuario::ADMIN) {
                 $consulta->bindValue(":usuario_id", $usuarioId);
             }
 
@@ -78,47 +167,31 @@ final class NoticiaServico
         }
     }
 
-    public function atualizar(Noticia $noticia, TipoUsuario $tipoUsuario, int $usuarioId): void
+    public function buscarPublicaPorId(int $noticiaId): ?array
     {
-        if ($noticia->getId() === null) {
-            throw new InvalidArgumentException("Notícia sem ID para atualização.");
-        }
-
-        $sql = "UPDATE noticias
-                SET titulo = :titulo, texto = :texto, resumo = :resumo,
-                    imagem = :imagem, destaque = :destaque, categoria_id = :categoria_id
-                WHERE id = :id";
-
-        if ($tipoUsuario === TipoUsuario::EDITOR) {
-            $sql .= " AND usuario_id = :usuario_id";
-        }
+        $sql = "SELECT noticias.id, noticias.data, noticias.titulo, noticias.texto,
+                        noticias.imagem, usuarios.nome AS autor
+                FROM noticias
+                LEFT JOIN usuarios ON noticias.usuario_id = usuarios.id
+                WHERE noticias.id = :noticia_id";
 
         try {
             $consulta = $this->conexao->prepare($sql);
-            $consulta->bindValue(":titulo", $noticia->getTitulo());
-            $consulta->bindValue(":texto", $noticia->getTexto());
-            $consulta->bindValue(":resumo", $noticia->getResumo());
-            $consulta->bindValue(":imagem", $noticia->getImagem());
-            $consulta->bindValue(":destaque", $noticia->getDestaque()->value);
-            $consulta->bindValue(":categoria_id", $noticia->getCategoriaId());
-            $consulta->bindValue(":id", $noticia->getId());
-
-            if ($tipoUsuario === TipoUsuario::EDITOR) {
-                $consulta->bindValue(":usuario_id", $usuarioId);
-            }
-
+            $consulta->bindValue(":noticia_id", $noticiaId);
             $consulta->execute();
+            return $consulta->fetch() ?: null;
         } catch (PDOException $e) {
             Utils::registrarLog($e);
-            throw new Exception("Erro ao atualizar notícia");
+            throw new Exception("Erro ao buscar notícia por ID");
         }
     }
 
-    public function inserir(Noticia $noticia ): void
+    public function inserir(Noticia $noticia): void
     {
         $sql = "INSERT INTO noticias (
-        titulo, texto, resumo, imagem, destaque, usuario_id, categoria_id ) VALUES(
-          :titulo, :texto, :resumo, :imagem, :destaque, :usuario_id, :categoria_id
+            titulo, texto, resumo, imagem, destaque, usuario_id, categoria_id
+        ) VALUES(
+            :titulo, :texto, :resumo, :imagem, :destaque, :usuario_id, :categoria_id
         )";
 
         try {
@@ -133,36 +206,65 @@ final class NoticiaServico
             $consulta->bindValue(":categoria_id", $noticia->getCategoriaId());
 
             $consulta->execute();
-            
-
         } catch (PDOException $e) {
             Utils::registrarLog($e);
             throw new Exception("Erro ao inserir notícia");
         }
-            
     }
 
-    public function excluir(int $noticiaId, TipoUsuario $tipoUsuario, int $usuarioId): void
+    public function atualizar(TipoUsuario $tipoUsuario, int $usuarioId, Noticia $noticia): void
     {
-        $sql = "DELETE FROM noticias WHERE id = :id";
+        $sql = "UPDATE noticias
+                SET titulo = :titulo,
+                    texto = :texto,
+                    resumo = :resumo,
+                    imagem = :imagem,
+                    destaque = :destaque,
+                    categoria_id = :categoria_id
+                WHERE id = :id";
 
-        if ($tipoUsuario === TipoUsuario::EDITOR) {
+        if ($tipoUsuario !== TipoUsuario::ADMIN) {
             $sql .= " AND usuario_id = :usuario_id";
         }
 
         try {
             $consulta = $this->conexao->prepare($sql);
-            $consulta->bindValue(":id", $noticiaId);
+            $consulta->bindValue(":titulo", $noticia->getTitulo());
+            $consulta->bindValue(":texto", $noticia->getTexto());
+            $consulta->bindValue(":resumo", $noticia->getResumo());
+            $consulta->bindValue(":imagem", $noticia->getImagem());
+            $consulta->bindValue(":destaque", $noticia->getDestaque()->value);
+            $consulta->bindValue(":categoria_id", $noticia->getCategoriaId());
+            $consulta->bindValue(":id", $noticia->getId());
 
-            if ($tipoUsuario === TipoUsuario::EDITOR) {
+            if ($tipoUsuario !== TipoUsuario::ADMIN) {
                 $consulta->bindValue(":usuario_id", $usuarioId);
             }
 
             $consulta->execute();
+        } catch (PDOException $e) {
+            Utils::registrarLog($e);
+            throw new Exception("Erro ao atualizar notícia");
+        }
+    }
 
-            if ($consulta->rowCount() === 0) {
-                throw new Exception("Notícia não encontrada ou sem permissão para exclusão");
+    public function excluir(TipoUsuario $tipoUsuario, int $usuarioId, int $noticiaId): void
+    {
+        $sql = "DELETE FROM noticias WHERE id = :noticia_id";
+
+        if ($tipoUsuario !== TipoUsuario::ADMIN) {
+            $sql .= " AND usuario_id = :usuario_id";
+        }
+
+        try {
+            $consulta = $this->conexao->prepare($sql);
+            $consulta->bindValue(":noticia_id", $noticiaId);
+
+            if ($tipoUsuario !== TipoUsuario::ADMIN) {
+                $consulta->bindValue(":usuario_id", $usuarioId);
             }
+
+            $consulta->execute();
         } catch (PDOException $e) {
             Utils::registrarLog($e);
             throw new Exception("Erro ao excluir notícia");
